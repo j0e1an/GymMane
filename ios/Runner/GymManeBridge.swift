@@ -17,8 +17,27 @@ final class GymManeBridge: NSObject {
 
   private var incoming: FlutterMethodChannel?
   private var pending: String?
+  private var liveChannel: FlutterMethodChannel?
+  private var liveReady = false
+  private var pendingLiveAction: String?
+  private var liveWatching = false
   private var hapticEngine: CHHapticEngine?
   private var savedBrightness: CGFloat?
+
+  private override init() {
+    super.init()
+    installLiveActions()
+  }
+
+  /// Picks up an action saved by the widget process before this app launched.
+  func pullStoredLiveAction() {
+    guard let id = UserDefaults(suiteName: Self.appGroup)?.string(forKey: LiveActionDispatch.storageKey) else {
+      return
+    }
+    UserDefaults(suiteName: Self.appGroup)?.removeObject(forKey: LiveActionDispatch.storageKey)
+    if pendingLiveAction == id && !liveReady { return }
+    deliverLiveAction(id)
+  }
 
   func register(messenger: FlutterBinaryMessenger) {
     let haptics = FlutterMethodChannel(name: "gymmane/haptics", binaryMessenger: messenger)
@@ -72,13 +91,16 @@ final class GymManeBridge: NSObject {
     }
 
     let live = FlutterMethodChannel(name: "gymmane/live_activity", binaryMessenger: messenger)
-    live.setMethodCallHandler { call, result in
+    liveChannel = live
+    live.setMethodCallHandler { [weak self] call, result in
       let args = call.arguments as? [String: Any] ?? [:]
       switch call.method {
       case "update":
         Self.updateLive(args, result: result)
       case "end":
         Self.endLive(result: result)
+      case "takeAction":
+        result(self?.takeLiveAction())
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -96,6 +118,14 @@ final class GymManeBridge: NSObject {
 
   func consume(url: URL) {
     if url.scheme == "gymmane" {
+      if url.host == "live-action" {
+        let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+          .queryItems?
+          .first(where: { $0.name == "id" })?
+          .value
+        if let id { LiveActionDispatch.send(id) }
+        return
+      }
       if let stored = takeStored() {
         deliver(stored)
       }
@@ -269,7 +299,8 @@ final class GymManeBridge: NSObject {
       total: total,
       restEnd: restEnd,
       restLabel: restLabel,
-      paused: paused
+      paused: paused,
+      actions: liveActions(args["actions"])
     )
     Task {
       do {
@@ -280,6 +311,63 @@ final class GymManeBridge: NSObject {
           result(FlutterError(code: "live", message: error.localizedDescription, details: nil))
         }
       }
+    }
+  }
+
+  private func installLiveActions() {
+    guard !liveWatching else { return }
+    liveWatching = true
+    LiveActionDispatch.deliver = { [weak self] id in
+      DispatchQueue.main.async { self?.deliverLiveAction(id) }
+    }
+    CFNotificationCenterAddObserver(
+      CFNotificationCenterGetDarwinNotifyCenter(),
+      Unmanaged.passUnretained(self).toOpaque(),
+      liveActionDarwinCallback,
+      LiveActionDispatch.darwinName,
+      nil,
+      .deliverImmediately
+    )
+  }
+
+  private var lastLiveActionId = ""
+  private var lastLiveActionAt = Date.distantPast
+
+  private func deliverLiveAction(_ id: String) {
+    guard LiveActionDispatch.allowed.contains(id) else { return }
+    let now = Date()
+    if id == lastLiveActionId && now.timeIntervalSince(lastLiveActionAt) < 0.4 { return }
+    lastLiveActionId = id
+    lastLiveActionAt = now
+    if liveReady, let liveChannel {
+      pendingLiveAction = nil
+      UserDefaults(suiteName: Self.appGroup)?.removeObject(forKey: LiveActionDispatch.storageKey)
+      liveChannel.invokeMethod("action", arguments: id)
+    } else {
+      pendingLiveAction = id
+      UserDefaults(suiteName: Self.appGroup)?.set(id, forKey: LiveActionDispatch.storageKey)
+    }
+  }
+
+  private func takeLiveAction() -> String? {
+    liveReady = true
+    let stored = UserDefaults(suiteName: Self.appGroup)?.string(forKey: LiveActionDispatch.storageKey)
+    UserDefaults(suiteName: Self.appGroup)?.removeObject(forKey: LiveActionDispatch.storageKey)
+    let id = pendingLiveAction ?? stored
+    pendingLiveAction = nil
+    guard let id, LiveActionDispatch.allowed.contains(id) else { return nil }
+    return id
+  }
+
+  @available(iOS 16.1, *)
+  private static func liveActions(_ raw: Any?) -> [WorkoutAttributes.LiveAction] {
+    guard let list = raw as? [Any] else { return [] }
+    return list.compactMap { item in
+      guard let map = item as? [String: Any],
+            let id = map["id"] as? String,
+            let label = map["label"] as? String,
+            LiveActionDispatch.allowed.contains(id) else { return nil }
+      return WorkoutAttributes.LiveAction(id: id, label: label)
     }
   }
 
@@ -335,4 +423,16 @@ private enum LiveActivityClient {
       await activity.update(using: state)
     }
   }
+}
+
+private func liveActionDarwinCallback(
+  _ center: CFNotificationCenter?,
+  _ observer: UnsafeMutableRawPointer?,
+  _ name: CFNotificationName?,
+  _ object: UnsafeRawPointer?,
+  _ userInfo: CFDictionary?
+) {
+  guard let observer else { return }
+  let bridge = Unmanaged<GymManeBridge>.fromOpaque(observer).takeUnretainedValue()
+  DispatchQueue.main.async { bridge.pullStoredLiveAction() }
 }

@@ -13,6 +13,7 @@ class LiveWorkout {
   static const _channel = MethodChannel('gymmane/live_activity');
   static const _android = MethodChannel('gymmane/live');
   static bool _listening = false;
+  static bool _tookPendingAction = false;
 
   static String _lastKey = '';
   static bool _busy = false;
@@ -24,9 +25,10 @@ class LiveWorkout {
 
   static Future<void> sync() async {
     if (!_supported) return;
-    if (!_listening && Platform.isAndroid) {
+    if (!_listening) {
       _listening = true;
-      _android.setMethodCallHandler((call) async {
+      final channel = Platform.isIOS ? _channel : _android;
+      channel.setMethodCallHandler((call) async {
         if (call.method == 'action') _act(call.arguments as String? ?? '');
       });
     }
@@ -36,6 +38,11 @@ class LiveWorkout {
     }
     _busy = true;
     try {
+      if (Platform.isIOS && !_tookPendingAction) {
+        final pending = await _channel.invokeMethod<String>('takeAction');
+        _tookPendingAction = true;
+        if (pending != null && pending.isNotEmpty) _act(pending);
+      }
       do {
         _dirty = false;
         await _push();
@@ -108,7 +115,7 @@ class LiveWorkout {
 
     final key = [
       name, detail, index, total, resting ? restEnd.millisecondsSinceEpoch : 0, paused, position,
-      actions.length, finished.join(), _flashes, paused ? fit.sessionElapsed : 0,
+      actions.map((a) => a.$1).join(','), finished.join(), _flashes, paused ? fit.sessionElapsed : 0,
     ].join('|');
     if (key == _lastKey) return;
     _lastKey = key;
@@ -123,6 +130,9 @@ class LiveWorkout {
           'restEnd': resting ? restEnd.millisecondsSinceEpoch : null,
           'restLabel': t.liveResting,
           'paused': paused,
+          'actions': [
+            for (final (id, label) in actions) {'id': id, 'label': label},
+          ],
         });
         return;
       }

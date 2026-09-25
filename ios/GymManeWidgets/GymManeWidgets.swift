@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import UIKit
 import WidgetKit
@@ -361,6 +362,7 @@ struct WorkoutLiveActivity: Widget {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+        LiveActionButtons(actions: context.state.actions)
       }
       .padding()
       .frame(maxWidth: .infinity, alignment: .leading)
@@ -375,7 +377,10 @@ struct WorkoutLiveActivity: Widget {
           }
         }
         DynamicIslandExpandedRegion(.bottom) {
-          Text(context.state.detail).lineLimit(2)
+          VStack(alignment: .leading, spacing: 6) {
+            Text(context.state.detail).lineLimit(2)
+            LiveActionButtons(actions: context.state.actions)
+          }
         }
       } compactLeading: {
         Image(systemName: "figure.strengthtraining.traditional")
@@ -389,6 +394,48 @@ struct WorkoutLiveActivity: Widget {
         Image(systemName: "figure.strengthtraining.traditional")
       }
     }
+  }
+}
+
+@available(iOS 16.1, *)
+struct LiveActionButtons: View {
+  let actions: [WorkoutAttributes.LiveAction]
+
+  var body: some View {
+    if !actions.isEmpty {
+      HStack(spacing: 6) {
+        ForEach(actions) { action in
+          LiveActionButton(action: action)
+        }
+      }
+      .font(.caption.weight(.semibold))
+    }
+  }
+}
+
+@available(iOS 16.1, *)
+struct LiveActionButton: View {
+  let action: WorkoutAttributes.LiveAction
+
+  var body: some View {
+    if #available(iOS 17.0, *) {
+      Button(intent: WorkoutActionIntent(actionId: action.id)) {
+        Text(action.label).lineLimit(1).minimumScaleFactor(0.65)
+      }
+      .buttonStyle(.bordered)
+    } else if let url = Self.url(action.id) {
+      Link(destination: url) {
+        Text(action.label).lineLimit(1).minimumScaleFactor(0.65)
+      }
+    }
+  }
+
+  private static func url(_ id: String) -> URL? {
+    var parts = URLComponents()
+    parts.scheme = "gymmane"
+    parts.host = "live-action"
+    parts.queryItems = [URLQueryItem(name: "id", value: id)]
+    return parts.url
   }
 }
 

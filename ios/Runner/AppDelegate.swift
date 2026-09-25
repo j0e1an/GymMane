@@ -7,6 +7,7 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    GymManeBridge.shared.pullStoredLiveAction()
     if let url = launchOptions?[.url] as? URL {
       GymManeBridge.shared.consume(url: url)
     }
