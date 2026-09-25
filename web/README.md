@@ -2,7 +2,8 @@
 
 The browser app is the Flutter project, not a separate product. It has the body
 map, set logging, routines, progress, and the exercise catalog. Workouts stay
-in this browser. Each Google account gets its own log on that browser.
+in this browser. Only the Google address in `ALLOWED_GOOGLE_EMAIL` can sign in.
+That account's log stays in this browser.
 
 Home-screen widgets, Wear OS, and the live workout notification stay on the
 phone. The Android and iOS apps do not ask for a Google account.
@@ -26,6 +27,7 @@ Fill in `.env`. Leave the file uncommitted.
 | `GOOGLE_CLIENT_SECRET` | yes | OAuth web client secret |
 | `PUBLIC_BASE_URL` | yes | Public origin, no trailing slash. Local: `http://localhost:8080` |
 | `SESSION_SECRET` | yes | Long random string, for example `openssl rand -hex 32` |
+| `ALLOWED_GOOGLE_EMAIL` | yes | The one Google address allowed to sign in. The server rejects every other account. |
 | `PORT` | yes | Host port. Empty uses `8080` |
 
 In Google Cloud Console, create an OAuth client of type **Web application**.
@@ -47,8 +49,10 @@ docker compose up --build
 Run that in the `web` directory, next to `Dockerfile` and `.env`.
 
 Open `http://localhost:8080` (or whatever `PORT` you set). You should see
-**Continue with Google** before any gym screen. After sign-in, the log is
-stored in this browser under that Google account. Sign out from Settings.
+**Continue with Google** before any gym screen. After Google returns the
+account, sign-in continues only when that address matches
+`ALLOWED_GOOGLE_EMAIL`. The log is stored in this browser for that account.
+Sign out from Settings.
 
 `docker compose` reads `.env` and passes those variables into the container.
 The image does not contain `.env`.

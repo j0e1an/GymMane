@@ -38,6 +38,7 @@ def config() -> dict:
         "client_secret": _required("GOOGLE_CLIENT_SECRET"),
         "public_base_url": base,
         "session_secret": _required("SESSION_SECRET"),
+        "allowed_email": _required("ALLOWED_GOOGLE_EMAIL").casefold(),
         "redirect_uri": f"{base}/auth/callback",
         "secure": base.startswith("https://"),
         "web_root": Path(os.environ.get("WEB_ROOT", "/app/web")).resolve(),
@@ -134,6 +135,15 @@ LOGIN_PAGE = """<!DOCTYPE html>
 """
 
 
+def email_allowed(email: object, allowed: str) -> bool:
+    if not isinstance(email, str) or not allowed:
+        return False
+    got = email.strip().casefold()
+    if not got:
+        return False
+    return hmac.compare_digest(got, allowed)
+
+
 def _google_user(code: str, cfg: dict) -> dict:
     form = urllib.parse.urlencode({
         "code": code,
@@ -209,6 +219,8 @@ class Handler(BaseHTTPRequestHandler):
             return None
         if not isinstance(exp, int) or exp < _now():
             return None
+        if not email_allowed(data.get("email"), self.cfg["allowed_email"]):
+            return None
         return data
 
     def _login(self) -> None:
@@ -244,9 +256,13 @@ class Handler(BaseHTTPRequestHandler):
         except (urllib.error.URLError, RuntimeError, json.JSONDecodeError, TimeoutError):
             self._text(502, "Google sign-in failed. Try again.")
             return
+        email = info.get("email") if isinstance(info.get("email"), str) else ""
+        if info.get("email_verified") is not True or not email_allowed(email, self.cfg["allowed_email"]):
+            self._text(403, "This Google account cannot sign in.")
+            return
         payload = {
             "sub": info["sub"],
-            "email": info.get("email") if isinstance(info.get("email"), str) else "",
+            "email": email,
             "name": info.get("name") if isinstance(info.get("name"), str) else "",
             "exp": _now() + SESSION_SECONDS,
         }
