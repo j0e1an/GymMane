@@ -154,10 +154,11 @@ take the `arm64-v8a` APK if you're not sure which one you need.
 |---|---|
 | Android 7.0+ | Supported |
 | Wear OS 3+ | In progress |
-| iOS 15+ | Supported |
+| iOS 15+ | Supported (tested through iOS 27) |
 | Desktop | Planned |
 
-This directory is the iOS app. On a Mac with Xcode 15 or newer, run it from here:
+This directory is the iOS Flutter app (Xcode project under `ios/`). On a Mac
+with **Xcode 15+** (Xcode 27 for the iOS 27 SDK), from this directory:
 
 ```bash
 flutter pub get
@@ -165,7 +166,39 @@ cd ios && pod install && cd ..
 flutter run
 ```
 
-Or open `ios/Runner.xcworkspace`. Signing needs the App Group `group.com.gymmane.app` on the Runner, GymManeWidgets, and GymManeShare targets. The Live Activity rest timer uses the same actions as the Android notification: mark the set done, pause or resume, +15s, skip rest, and next exercise.
+Or open `ios/Runner.xcworkspace`. Signing needs the App Group
+`group.com.gymmane.app` on the Runner, GymManeWidgets, and GymManeShare
+targets. The Live Activity rest timer uses the same actions as the Android
+notification: mark the set done, pause or resume, +15s, skip rest, and next
+exercise.
+
+If Xcode fails with a SwiftPM platform floor error (`FlutterFramework`
+requires iOS 13 but a plugin still declares 12), run:
+
+```bash
+./scripts/patch_spm_ios_floor.sh
+```
+
+then build again.
+
+### Sideload with AltServer (free Apple ID)
+
+No paid Apple Developer Program required. Build an unsigned IPA and install it
+with [AltStore](https://altstore.io) / AltServer (free Apple ID, **7-day**
+refresh):
+
+```bash
+./scripts/build_altstore_ipa.sh
+# → build/ios/ipa/GymMane.ipa
+```
+
+Then in AltStore on your iPhone: **My Apps → + → GymMane.ipa**. Refresh at
+least every 7 days while AltServer is running on your Mac.
+
+On a free Apple ID, **core workout logging works**; home-screen widgets, Live
+Activity, and the Share extension often break because App Groups and extra App
+IDs are limited. Full steps and troubleshooting:
+[docs/SIDELOAD.md](docs/SIDELOAD.md).
 
 ## Privacy
 
@@ -181,11 +214,11 @@ issue first. Translations are plain files in [lib/l10n](lib/l10n), and
 
 ```bash
 git clone https://github.com/InlitX/GymMane.git
-cd GymMane
+cd GymMane   # or this ios/ tree in the monorepo
 flutter pub get
-flutter build apk --release
-# iOS, on a Mac with Xcode:
 flutter build ios --release
+# Free-ID sideload IPA:
+./scripts/build_altstore_ipa.sh
 ```
 
 ## Support

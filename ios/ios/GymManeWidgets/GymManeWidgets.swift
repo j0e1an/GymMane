@@ -194,7 +194,6 @@ extension View {
   @ViewBuilder func gymmaneWidget() -> some View {
     if #available(iOS 17.0, *) {
       self.containerBackground(for: .widget) { Color.clear }
-        .contentMarginsDisabled()
     } else {
       self
     }
