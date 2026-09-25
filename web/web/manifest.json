@@ -1,0 +1,35 @@
+{
+    "name": "GymMane",
+    "short_name": "GymMane",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0A0908",
+    "theme_color": "#0A0908",
+    "description": "Gym log with a body map, set logging, routines, progress, and the exercise catalog.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

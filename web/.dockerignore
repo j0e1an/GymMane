@@ -1,0 +1,9 @@
+.env
+.git
+.dart_tool
+build
+coverage
+android/.gradle
+**/__pycache__
+*.iml
+.idea
