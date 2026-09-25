@@ -8,7 +8,7 @@
 
 # GymMane
 
-A free, offline gym log for Android.<br/>
+A free, offline gym log for Android and iOS.<br/>
 Tap the muscles you want to train, log your sets and watch your numbers go up.
 
 <br/>
@@ -154,7 +154,7 @@ take the `arm64-v8a` APK if you're not sure which one you need.
 |---|---|
 | Android 7.0+ | Supported |
 | Wear OS 3+ | In progress |
-| iOS 15+ | In progress |
+| iOS 15+ | Supported |
 | Desktop | Planned |
 
 ## Privacy
@@ -174,6 +174,8 @@ git clone https://github.com/InlitX/GymMane.git
 cd GymMane
 flutter pub get
 flutter build apk --release
+# iOS, on a Mac with Xcode:
+flutter build ios --release
 ```
 
 ## Support

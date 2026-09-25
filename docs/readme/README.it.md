@@ -8,7 +8,7 @@
 
 # GymMane
 
-Un diario da palestra gratuito e offline per Android.<br/>
+Un diario da palestra gratuito e offline per Android e iOS.<br/>
 Tocca i muscoli che vuoi allenare, registra le serie e guarda crescere i tuoi numeri.
 
 <br/>
@@ -159,7 +159,7 @@ sai quale APK scegliere, prendi `arm64-v8a`.
 |---|---|
 | Android 7.0+ | Supportato |
 | Wear OS 3+ | In sviluppo |
-| iOS 15+ | In sviluppo |
+| iOS 15+ | Supportato |
 | Desktop | In programma |
 
 ## Privacy
