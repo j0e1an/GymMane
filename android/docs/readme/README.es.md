@@ -8,7 +8,7 @@
 
 # GymMane
 
-Un diario de gimnasio gratis y sin conexión para Android.<br/>
+Un diario de gimnasio gratis y sin conexión para Android y iOS.<br/>
 Toca los músculos que quieres entrenar, apunta tus series y mira cómo suben tus números.
 
 <br/>
@@ -154,7 +154,7 @@ sabes qué APK elegir, coge el `arm64-v8a`.
 |---|---|
 | Android 7.0+ | Disponible |
 | Wear OS 3+ | En desarrollo |
-| iOS 15+ | En desarrollo |
+| iOS 15+ | Disponible |
 | Escritorio | Planeado |
 
 ## Privacidad
