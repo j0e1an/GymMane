@@ -27,11 +27,11 @@ class _MomentsScreenState extends State<MomentsScreen> {
 
   Future<void> _add() async {
     if (_busy) return;
-    final source = await pickPhotoSource(context);
-    if (source == null) return;
+    final choice = await pickPhotoSource(context, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
+    if (choice == null) return;
     setState(() => _busy = true);
     try {
-      if (source == ImageSource.gallery) {
+      if (choice.source == ImageSource.gallery) {
         final shots = await ImagePicker()
             .pickMultiImage(maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
         for (final shot in shots) {
@@ -39,8 +39,7 @@ class _MomentsScreenState extends State<MomentsScreen> {
         }
         return;
       }
-      final shot = await ImagePicker()
-          .pickImage(source: source, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
+      final shot = await loadPickedPhoto(choice, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
       if (shot == null) return;
       await fit.addMoment(shot.path);
     } catch (_) {

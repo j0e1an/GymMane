@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' show PlatformDispatcher;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,6 +19,7 @@ import '../models/profile.dart';
 import '../models/progress_shot.dart';
 import '../models/workout.dart';
 import '../platform/app_settings_api.dart';
+import '../platform/web_alerts.dart';
 import '../services/alarm_store.dart';
 import '../services/beeper.dart';
 import '../services/exercise_match.dart';

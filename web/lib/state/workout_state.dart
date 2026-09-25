@@ -703,6 +703,7 @@ mixin WorkoutState on FitCore, SettingsState, LibraryState, PlacesState, StatsSt
     holdEndsAt = holdStartsAt!.add(Duration(seconds: secs));
     _holdTimer?.cancel();
     final sound = alarmStyle != 'vibrate';
+    if (sound) Beeper.instance.prime();
     var shownLead = holdLead;
     var shown = holdRemaining;
     _holdTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {

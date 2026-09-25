@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../l10n/l10n.dart';
+import '../platform/web_alerts.dart';
 import 'train_reminder.dart';
 
 class ProgressReminder {
@@ -35,6 +36,18 @@ class ProgressReminder {
     await cancel();
     if (intervalDays <= 0) return;
 
+    if (kIsWeb) {
+      final when = DateTime(day.year, day.month, day.day, 10);
+      if (!when.isAfter(DateTime.now())) return;
+      await WebAlerts.schedule(
+        id: _id,
+        title: t.notifPhotoTitle,
+        body: t.notifPhotoBody(intervalDays),
+        when: when,
+      );
+      return;
+    }
+
     try {
       final when = atLocal(DateTime(day.year, day.month, day.day, 10));
       if (!when.isAfter(tz.TZDateTime.now(tz.local))) return;
@@ -53,6 +66,10 @@ class ProgressReminder {
 
   Future<void> cancel() async {
     if (!enabled) return;
+    if (kIsWeb) {
+      await WebAlerts.cancel(_id);
+      return;
+    }
     try {
       await _plugin.cancel(id: _id);
     } catch (_) {}

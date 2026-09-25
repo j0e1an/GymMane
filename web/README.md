@@ -70,3 +70,14 @@ flutter run -d chrome
 ```
 
 Use the container when you want the real sign-in flow.
+
+Training reminders and progress-photo reminders use the browser's notifications.
+The site asks for permission when you save a training reminder, change the photo
+interval, or start a rest. Rest-over also posts through a service worker so it
+can show outside the tab. While the tab is open, the rest sound still plays in
+the page. Vibrate uses the Vibration API. Timed-hold ticks use Web Audio. Keep
+screen on uses the Screen Wake Lock API during a session. On a phone, Take photo
+opens the camera. On a desktop, that control picks a file. Gallery upload is
+unchanged. Home-screen widgets, Wear OS, and the live workout notification are
+not part of the web app. Import reads a file you pick. It does not receive
+Android share intents.

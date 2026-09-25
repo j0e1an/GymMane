@@ -382,6 +382,28 @@ mixin SettingsState on FitCore, ToolsState, LibraryState {
   }
 
   Future<void> askAlarmPermission({bool force = false}) async {
+    if (kIsWeb) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final last = alarmAskedAt;
+      if (WebAlerts.allowed) {
+        if (!alarmAllowed) {
+          alarmAllowed = true;
+          notifyListeners();
+        }
+        return;
+      }
+      if (!force && last != null && now - last < _askAgainAfter.inMilliseconds) {
+        alarmAllowed = false;
+        notifyListeners();
+        return;
+      }
+      final pending = WebAlerts.request();
+      alarmAskedAt = now;
+      _persist();
+      alarmAllowed = await pending;
+      notifyListeners();
+      return;
+    }
     if (await RestAlarm.instance.notificationsAllowed()) {
       if (!alarmAllowed) {
         alarmAllowed = true;

@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../l10n/l10n.dart';
+import '../platform/camera_pick.dart';
 import '../platform/share_bytes.dart';
 import '../models/workout.dart';
 import '../services/gallery.dart';
@@ -69,6 +70,24 @@ class _StickerEditorState extends State<StickerEditor> {
         gc.sage,
         const Color(0xFFE8E1D7),
       ];
+
+  void _camera() {
+    final start = beginCameraPick(maxWidth: 2160, maxHeight: 3840, imageQuality: 92);
+    final pending = start.pending;
+    if (pending != null) {
+      _useShot(pending);
+    } else {
+      _pick(ImageSource.camera);
+    }
+  }
+
+  Future<void> _useShot(Future<ShotBytes?> pending) async {
+    try {
+      final shot = await pending;
+      if (shot == null || !mounted) return;
+      setState(() => _photo = shot.bytes);
+    } catch (_) {}
+  }
 
   Future<void> _pick(ImageSource source) async {
     try {
@@ -244,7 +263,7 @@ class _StickerEditorState extends State<StickerEditor> {
           Row(children: [
             _chip(gc, PhosphorIconsRegular.image, t.stickerGallery, false, () => _pick(ImageSource.gallery)),
             const SizedBox(width: 8),
-            _chip(gc, PhosphorIconsRegular.camera, t.stickerCamera, false, () => _pick(ImageSource.camera)),
+            _chip(gc, PhosphorIconsRegular.camera, t.stickerCamera, false, _camera),
             const SizedBox(width: 8),
             _chip(gc, PhosphorIconsRegular.checkerboard, t.stickerNoPhoto, _photo == null,
                 () => setState(() => _photo = null)),

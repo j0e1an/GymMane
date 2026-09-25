@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../l10n/l10n.dart';
@@ -31,17 +30,12 @@ class _TimelineScreenState extends State<TimelineScreen> {
 
   Future<void> _shoot(DateTime day, String pose) async {
     if (_busy) return;
-    final source = await pickPhotoSource(context);
-    if (source == null) return;
+    final choice = await pickPhotoSource(context, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
+    if (choice == null) return;
 
     setState(() => _busy = true);
     try {
-      final shot = await ImagePicker().pickImage(
-        source: source,
-        maxWidth: 1440,
-        maxHeight: 1920,
-        imageQuality: 88,
-      );
+      final shot = await loadPickedPhoto(choice, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
       if (shot == null) return;
       await fit.attachShot(day, pose, shot.path);
     } catch (_) {
@@ -450,6 +444,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
   }
 
   Future<void> _askInterval(bool body) async {
+    final pending = fit.askAlarmPermission();
     final days = await askNumber(
       context,
       title: body ? t.timelineEvery : t.photoEvery,
@@ -457,6 +452,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
       decimal: false,
     );
     if (days != null) fit.setPhotoInterval(days.round());
+    await pending;
   }
 
   Widget _intervalPicker(GymColors gc, {required bool body}) {
@@ -497,7 +493,10 @@ class _TimelineScreenState extends State<TimelineScreen> {
                       label: days <= 0 ? t.photoEveryOff : '$days',
                       semantics: t.photoInterval(days),
                       on: current == days,
-                      onTap: () => fit.setPhotoInterval(days),
+                      onTap: () {
+                        fit.askAlarmPermission();
+                        fit.setPhotoInterval(days);
+                      },
                     ),
                   ),
               Expanded(

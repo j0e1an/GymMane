@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../platform/audio_api.dart';
 import '../platform/gym_io.dart';
 import '../platform/paths.dart';
+import '../platform/web_tone.dart';
 
 class Beeper {
   Beeper._();
@@ -16,6 +17,10 @@ class Beeper {
   String? _tick;
   String? _go;
   bool _failed = false;
+
+  void prime() {
+    if (kIsWeb) primeTones();
+  }
 
   Future<bool> _ready() async {
     if (_player != null) return true;
@@ -50,7 +55,15 @@ class Beeper {
     try {
       kind == _TickKind.go ? HapticFeedback.heavyImpact() : HapticFeedback.selectionClick();
     } catch (_) {}
-    if (!sound || !await _ready()) return;
+    if (!sound) return;
+    if (kIsWeb) {
+      await playTone(
+        hz: kind == _TickKind.go ? 1318.5 : 880,
+        seconds: kind == _TickKind.go ? 0.32 : 0.09,
+      );
+      return;
+    }
+    if (!await _ready()) return;
     final path = kind == _TickKind.go ? _go : _tick;
     if (path == null) return;
     try {

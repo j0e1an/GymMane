@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../platform/web_wake.dart';
+
 class ScreenAwake {
   ScreenAwake._();
 
@@ -20,8 +22,17 @@ class ScreenAwake {
   }
 
   static Future<void> keepOn(bool on) async {
-    if (kIsWeb || _last == on) return;
+    if (_last == on) return;
     _last = on;
+    if (kIsWeb) {
+      try {
+        await setWakeLock(on);
+      } catch (e) {
+        _last = null;
+        debugPrint('ScreenAwake no disponible: $e');
+      }
+      return;
+    }
     try {
       await _channel.invokeMethod<void>('keepOn', {'on': on});
     } catch (e) {

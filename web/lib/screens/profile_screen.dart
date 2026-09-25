@@ -38,14 +38,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickBanner() async {
     if (_busy) return;
-    final source = await pickPhotoSource(context);
-    if (source == null) return;
+    final choice = await pickPhotoSource(context, maxWidth: 1600, maxHeight: 900, imageQuality: 82);
+    if (choice == null) return;
     setState(() => _busy = true);
     try {
-      final shot = await ImagePicker()
-          .pickImage(source: source, maxWidth: 1600, maxHeight: 900, imageQuality: 82);
+      final shot = await loadPickedPhoto(choice, maxWidth: 1600, maxHeight: 900, imageQuality: 82);
       if (shot == null) return;
-      fit.setProfileBanner(await shot.readAsBytes());
+      fit.setProfileBanner(shot.bytes);
     } catch (_) {
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -54,11 +53,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _snapshot() async {
     if (_busy) return;
-    final source = await pickPhotoSource(context);
-    if (source == null) return;
+    final choice = await pickPhotoSource(context, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
+    if (choice == null) return;
     setState(() => _busy = true);
     try {
-      if (source == ImageSource.gallery) {
+      if (choice.source == ImageSource.gallery) {
         final shots = await ImagePicker()
             .pickMultiImage(maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
         for (final shot in shots) {
@@ -66,8 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
         return;
       }
-      final shot = await ImagePicker()
-          .pickImage(source: source, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
+      final shot = await loadPickedPhoto(choice, maxWidth: 1440, maxHeight: 1920, imageQuality: 88);
       if (shot == null) return;
       await fit.addMoment(shot.path);
     } catch (_) {

@@ -8,6 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 import '../l10n/l10n.dart';
 import '../platform/audio_api.dart';
 import '../platform/gym_io.dart';
+import '../platform/web_alerts.dart';
 
 class RestAlarm {
   RestAlarm._();
@@ -177,6 +178,7 @@ class RestAlarm {
       _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
 
   Future<bool> notificationsAllowed() async {
+    if (kIsWeb) return WebAlerts.allowed;
     if (!_ready) return true;
     try {
       if (Platform.isIOS) {
@@ -190,6 +192,10 @@ class RestAlarm {
   }
 
   Future<bool> requestPermission() async {
+    if (kIsWeb) {
+      final pending = WebAlerts.request();
+      return pending;
+    }
     if (!_ready) return true;
     try {
       if (Platform.isIOS) {
@@ -212,6 +218,30 @@ class RestAlarm {
 
   Future<void> fireNow() async {
     await cancel();
+    if (kIsWeb) {
+      if (WebAlerts.pageHidden) {
+        await WebAlerts.showNow(
+          id: _id,
+          title: t.restOverTitle,
+          body: t.restOverBody,
+          vibrate: style == 'vibrate',
+          silent: style == 'vibrate',
+        );
+      }
+      if (style == 'vibrate') {
+        WebAlerts.vibrate(const [350, 180, 350, 180, 600]);
+        return;
+      }
+      final player = _player;
+      if (player == null) return;
+      try {
+        await player.stop();
+        await player.play(_source, volume: 1.0);
+      } catch (e) {
+        debugPrint('No se pudo reproducir el aviso: $e');
+      }
+      return;
+    }
     final visible = WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
 
     if (_ready && !visible) {
@@ -288,6 +318,19 @@ class RestAlarm {
   }
 
   Future<void> schedule(Duration after) async {
+    if (kIsWeb) {
+      await WebAlerts.schedule(
+        id: _id,
+        title: t.restOverTitle,
+        body: t.restOverBody,
+        when: DateTime.now().add(after),
+        vibrate: style == 'vibrate',
+        silent: style == 'vibrate',
+        persist: false,
+        onlyWhenHidden: true,
+      );
+      return;
+    }
     if (!_ready) return;
     final mine = ++_generation;
 
@@ -311,6 +354,10 @@ class RestAlarm {
 
   Future<void> cancel() async {
     _generation++;
+    if (kIsWeb) {
+      await WebAlerts.cancel(_id);
+      return;
+    }
     await _clear();
   }
 

@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1434,35 +1433,21 @@ class _ProfileSheetState extends State<_ProfileSheet> {
   }
 
   Future<void> _pickBanner() async {
-    final source = await pickPhotoSource(context);
-    if (source == null) return;
+    final choice = await pickPhotoSource(context, maxWidth: 1600, maxHeight: 900, imageQuality: 82);
+    if (choice == null) return;
 
-    final shot = await ImagePicker().pickImage(
-      source: source,
-      maxWidth: 1600,
-      maxHeight: 900,
-      imageQuality: 82,
-    );
-    if (shot == null) return;
-    final bytes = await shot.readAsBytes();
-    if (!mounted) return;
-    _up(() => fit.setProfileBanner(bytes));
+    final shot = await loadPickedPhoto(choice, maxWidth: 1600, maxHeight: 900, imageQuality: 82);
+    if (shot == null || !mounted) return;
+    _up(() => fit.setProfileBanner(shot.bytes));
   }
 
   Future<void> _pickPhoto() async {
-    final source = await pickPhotoSource(context);
-    if (source == null) return;
+    final choice = await pickPhotoSource(context, maxWidth: 512, maxHeight: 512, imageQuality: 80);
+    if (choice == null) return;
 
-    final shot = await ImagePicker().pickImage(
-      source: source,
-      maxWidth: 512,
-      maxHeight: 512,
-      imageQuality: 80,
-    );
-    if (shot == null) return;
-    final bytes = await shot.readAsBytes();
-    if (!mounted) return;
-    _up(() => fit.setProfilePhoto(bytes));
+    final shot = await loadPickedPhoto(choice, maxWidth: 512, maxHeight: 512, imageQuality: 80);
+    if (shot == null || !mounted) return;
+    _up(() => fit.setProfilePhoto(shot.bytes));
   }
 
   Widget _badgeDots(GymColors gc) {

@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/gymmane_app.dart';
 import 'platform/gym_io.dart';
+import 'platform/web_alerts.dart';
 import 'platform/web_auth.dart';
 import 'platform/web_session.dart';
 import 'screens/web_sign_in_screen.dart';
@@ -49,6 +50,7 @@ Future<void> main() async {
   await AlarmStore.init();
   fit.loadFromStore();
   await RestAlarm.instance.init();
+  if (kIsWeb) await WebAlerts.restore();
   fit.syncPhotoReminder();
   fit.syncTrainReminder();
 

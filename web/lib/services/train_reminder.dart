@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../l10n/l10n.dart';
+import '../platform/web_alerts.dart';
 
 class TrainReminder {
   TrainReminder._();
@@ -34,6 +35,10 @@ class TrainReminder {
   Future<void> cancel() async {
     if (!enabled) return;
     for (var i = 0; i < _slots; i++) {
+      if (kIsWeb) {
+        await WebAlerts.cancel(_firstId + i);
+        continue;
+      }
       try {
         await _plugin.cancel(id: _firstId + i);
       } catch (_) {}
@@ -47,6 +52,23 @@ class TrainReminder {
   }) async {
     if (!enabled) return;
     await cancel();
+    if (kIsWeb) {
+      final now = DateTime.now();
+      var slot = 0;
+      for (var i = skipToday ? 1 : 0; i < _horizonDays && slot < _slots; i++) {
+        final day = DateTime(now.year, now.month, now.day + i, minuteOfDay ~/ 60, minuteOfDay % 60);
+        if (!day.isAfter(now)) continue;
+        if (weekdays.isNotEmpty && !weekdays.contains(day.weekday)) continue;
+        await WebAlerts.schedule(
+          id: _firstId + slot,
+          title: t.notifTrainTitle,
+          body: t.notifTrainBody,
+          when: day,
+        );
+        slot++;
+      }
+      return;
+    }
     final mode = await reminderMode(_plugin);
     final now = DateTime.now();
     var slot = 0;
