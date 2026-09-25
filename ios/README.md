@@ -183,17 +183,20 @@ then build again.
 
 ### Sideload with AltServer (free Apple ID)
 
-No paid Apple Developer Program required. Build an unsigned IPA and install it
-with [AltStore](https://altstore.io) / AltServer (free Apple ID, **7-day**
-refresh):
+This repo does **not** include AltServer. Download it (and AltStore) from
+[altstore.io](https://altstore.io), install AltServer on your Mac, then use it
+to put AltStore on your iPhone. No paid Apple Developer Program required.
+
+Build GymMane’s unsigned IPA from this directory:
 
 ```bash
 ./scripts/build_altstore_ipa.sh
 # → build/ios/ipa/GymMane.ipa
 ```
 
-Then in AltStore on your iPhone: **My Apps → + → GymMane.ipa**. Refresh at
-least every 7 days while AltServer is running on your Mac.
+In **AltStore** on the phone: **My Apps → + →** choose that IPA. Sign in with
+your free Apple ID. Refresh at least every **7 days** while AltServer is
+running on the Mac (menu bar).
 
 On a free Apple ID, **core workout logging works**; home-screen widgets, Live
 Activity, and the Share extension often break because App Groups and extra App
